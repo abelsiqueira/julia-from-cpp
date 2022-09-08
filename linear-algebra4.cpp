@@ -82,20 +82,24 @@ int main() {
         "out, in, length(in))"
     );
     char linop_str[256];
-    sprintf(linop_str, "LinearOperator(Float64, %d, %d, true, true, prod)\n", n, n);
+    sprintf(linop_str, "LinearOperator(Float64, %d, %d, true, true, prod)", n, n);
     jl_value_t *A_operator = checked_eval_string(linop_str);
 
     checked_eval_string("using Krylov");
     jl_function_t *cg = checked_eval_string("(A, b) -> cg(A, b)[1]");
     check_julia_exception();
-    jl_array_t *u = (jl_array_t *) jl_call2(cg, A_operator, (jl_value_t *) rhs);
-    check_julia_exception();
+    {
+        jl_array_t *u = (jl_array_t *) jl_call2(cg, A_operator, (jl_value_t *) rhs);
+        JL_GC_PUSH1(&u);
+        check_julia_exception();
 
-    cout << "Plotting... this may take a while" << endl;
-    checked_eval_string("using Plots");
-    jl_function_t *plot = jl_get_function(jl_main_module, "plot");
-    jl_call1(plot, (jl_value_t *) u);
-    checked_eval_string("png(\"linear-algebra4\")");
+        cout << "Plotting... this may take a while" << endl;
+        checked_eval_string("using Plots");
+        jl_function_t *plot = jl_get_function(jl_main_module, "plot");
+        jl_call1(plot, (jl_value_t *) u);
+        checked_eval_string("png(\"linear-algebra4\")");
+        JL_GC_POP();
+    }
 
     JL_GC_POP();
 
