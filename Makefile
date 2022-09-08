@@ -10,32 +10,33 @@ libpoisson_mul.so:
 	g++ $(CARGS) -c poisson_mul.c -o poisson_mul.o
 	ld -shared poisson_mul.o -o libpoisson_mul.so
 
-main:
-	g++ $(CARGS) main.cpp $(JULIA_ARGS) -o main
 
-simple-sqrt2-example:
-	g++ $(CARGS) simple-sqrt2-example.cpp $(JULIA_ARGS) -o simple-sqrt2-example
+main.exe: main.cpp
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-better-sqrt2-example:
-	g++ $(CARGS) better-sqrt2-example.cpp $(JULIA_ARGS) -o better-sqrt2-example
+simple-sqrt2-example.exe: simple-sqrt2-example.cpp
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-integrator: libmy_c_func.so
-	g++ $(CARGS) integrator.cpp $(JULIA_ARGS) -o integrator
+better-sqrt2-example.exe: better-sqrt2-example.cpp
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-integrator-and-distributions: libmy_c_func.so
-	g++ $(CARGS) integrator-and-distributions.cpp $(JULIA_ARGS) -o integrator-and-distributions
+integrator.exe: integrator.cpp libmy_c_func.so
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-integrator-and-distributions2: libmy_c_func.so
-	g++ $(CARGS) integrator-and-distributions2.cpp $(JULIA_ARGS) -o integrator-and-distributions2
+integrator-and-distributions.exe: integrator-and-distributions.cpp libmy_c_func.so
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-linear-algebra1:
-	g++ $(CARGS) linear-algebra1.cpp $(JULIA_ARGS) -o linear-algebra1
+integrator-and-distributions2.exe: integrator-and-distributions2.cpp libmy_c_func.so
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-linear-algebra2:
-	g++ $(CARGS) linear-algebra2.cpp $(JULIA_ARGS) -o linear-algebra2
+linear-algebra1.exe: linear-algebra1.cpp
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-linear-algebra3:
-	g++ $(CARGS) linear-algebra3.cpp $(JULIA_ARGS) -o linear-algebra3
+linear-algebra2.exe: linear-algebra2.cpp
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
 
-linear-algebra4: libpoisson_mul.so
-	g++ $(CARGS) linear-algebra4.cpp $(JULIA_ARGS) -o linear-algebra4
+linear-algebra3.exe: linear-algebra3.cpp
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
+
+linear-algebra4.exe: linear-algebra4.cpp libpoisson_mul.so
+	g++ $(CARGS) $< $(JULIA_ARGS) -o $@
