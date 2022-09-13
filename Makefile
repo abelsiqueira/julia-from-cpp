@@ -3,23 +3,22 @@ JULIA_DIR = /opt/julias/julia-1.8.0
 JLARGS = -I$(JULIA_DIR)/include/julia -L$(JULIA_DIR)/lib -Wl,-rpath,$(JULIA_DIR)/lib -ljulia
 SRC = $(wildcard *.cpp)
 EXE = $(SRC:cpp=exe)
+LIBS = libmy_c_func.so libpoisson_mul.so
 
-.PHONY: clean all
-echo:
-	echo $(EXE)
+.PHONY: all clean purge default
+default:
+	@echo "targets: all, FILE.exe, clean, purge"
 
 all: $(EXE)
 
-%.exe: %.cpp libmy_c_func.so libpoisson_mul.so
-	g++ $(CARGS) $< $(JLARGS) -o $@
+%.exe: %.cpp $(LIBS) aux.o
+	g++ $(CARGS) $< $(JLARGS) aux.o -o $@
 
-libmy_c_func.so:
-	g++ $(CARGS) -c my_c_func.c -o my_c_func.o
-	ld -shared my_c_func.o -o libmy_c_func.so
+%.o: %.cpp
+	g++ $(CARGS) -c $< $(JLARGS) -o $@
 
-libpoisson_mul.so:
-	g++ $(CARGS) -c poisson_mul.c -o poisson_mul.o
-	ld -shared poisson_mul.o -o libpoisson_mul.so
+lib%.so: %.o
+	ld -shared $< -o $@
 
 clean:
 	rm -f $(EXE)
