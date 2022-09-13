@@ -1,39 +1,10 @@
+#include "aux.h"
 #include <iostream>
 #include <julia.h>
 
 JULIA_DEFINE_FAST_TLS // only define this once, in an executable
 
 using namespace std;
-
-jl_value_t *checked_eval_string(const char* code)
-{
-    jl_value_t *result = jl_eval_string(code);
-    if (jl_exception_occurred()) {
-        // none of these allocate, so a gc-root (JL_GC_PUSH) is not necessary
-        jl_call2(jl_get_function(jl_base_module, "showerror"),
-                 jl_stderr_obj(),
-                 jl_exception_occurred());
-        jl_printf(jl_stderr_stream(), "\n");
-        jl_atexit_hook(1);
-        exit(1);
-    }
-    assert(result && "Missing return value but no exception occurred!");
-    return result;
-}
-
-int check_julia_exception()  {
-    if (jl_exception_occurred()) {
-        jl_printf(jl_stderr_stream(), "Exception: ");
-        jl_call2(jl_get_function(jl_base_module, "showerror"),
-            jl_stderr_obj(),
-            jl_exception_occurred()
-        );
-        jl_printf(jl_stderr_stream(), "\n");
-        jl_atexit_hook(1);
-        exit(1);
-    }
-    return 0;
-}
 
 double poisson_f(double x) {
     return 5 * exp(-5 * x * x);
@@ -91,7 +62,7 @@ int main() {
         }
     }
 
-    checked_eval_string("using SparseArrays");
+    handle_eval_string("using SparseArrays");
     jl_function_t *sparse = jl_get_function(jl_main_module, "sparse");
     jl_value_t *array_index_type = jl_apply_array_type((jl_value_t *) jl_int64_type, 1);
     jl_value_t *A_sparse = jl_call3(
@@ -101,28 +72,28 @@ int main() {
         (jl_value_t *) jl_ptr_to_array_1d(array_type, vals, 3 * n - 2, 0)
     );
 
-    checked_eval_string("using LDLFactorizations");
+    handle_eval_string("using LDLFactorizations");
     jl_function_t *ldl = jl_get_function(jl_main_module, "ldl");
-    check_julia_exception();
+    handle_julia_exception();
     jl_value_t *ldlObj = jl_call1(ldl, (jl_value_t *) A_sparse);
     {
         JL_GC_PUSH1(&ldlObj);
-        check_julia_exception();
+        handle_julia_exception();
         jl_function_t *ldiv = jl_get_function(jl_main_module, "ldiv!");
         jl_call3(ldiv, (jl_value_t *) u, ldlObj, (jl_value_t *) rhs);
-        check_julia_exception();
+        handle_julia_exception();
         JL_GC_POP();
     }
 
     cout << "Plotting... this may take a while" << endl;
-    checked_eval_string("using Plots");
+    handle_eval_string("using Plots");
     jl_function_t *plot = jl_get_function(jl_main_module, "plot");
     jl_call1(plot, (jl_value_t *) u);
-    checked_eval_string("png(\"linear-algebra3\")");
+    handle_eval_string("png(\"linear-algebra3\")");
 
     JL_GC_POP();
 
-    check_julia_exception();
+    handle_julia_exception();
 
     jl_atexit_hook(0);
 

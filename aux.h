@@ -3,7 +3,7 @@
 
 #include <julia.h>
 
-void handle_exception(void);
+void handle_julia_exception(void);
 jl_value_t *handle_eval_string(const char* code);
 
 #endif // MY_JULIA_AUX

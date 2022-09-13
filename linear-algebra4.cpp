@@ -1,39 +1,10 @@
+#include "aux.h"
 #include <iostream>
 #include <julia.h>
 
 JULIA_DEFINE_FAST_TLS // only define this once, in an executable
 
 using namespace std;
-
-jl_value_t *checked_eval_string(const char* code)
-{
-    jl_value_t *result = jl_eval_string(code);
-    if (jl_exception_occurred()) {
-        // none of these allocate, so a gc-root (JL_GC_PUSH) is not necessary
-        jl_call2(jl_get_function(jl_base_module, "showerror"),
-                 jl_stderr_obj(),
-                 jl_exception_occurred());
-        jl_printf(jl_stderr_stream(), "\n");
-        jl_atexit_hook(1);
-        exit(1);
-    }
-    assert(result && "Missing return value but no exception occurred!");
-    return result;
-}
-
-int check_julia_exception()  {
-    if (jl_exception_occurred()) {
-        jl_printf(jl_stderr_stream(), "Exception: ");
-        jl_call2(jl_get_function(jl_base_module, "showerror"),
-            jl_stderr_obj(),
-            jl_exception_occurred()
-        );
-        jl_printf(jl_stderr_stream(), "\n");
-        jl_atexit_hook(1);
-        exit(1);
-    }
-    return 0;
-}
 
 double poisson_f(double x) {
     return 5 * exp(-5 * x * x);
@@ -73,8 +44,8 @@ int main() {
         }
     }
 
-    checked_eval_string("using LinearOperators");
-    checked_eval_string(
+    handle_eval_string("using LinearOperators");
+    handle_eval_string(
         "prod(out, in) = ccall(\n"
         "(:poisson_mul, \"libpoisson_mul.so\"),\n"
         "Cvoid,\n"
@@ -83,27 +54,27 @@ int main() {
     );
     char linop_str[256];
     sprintf(linop_str, "LinearOperator(Float64, %d, %d, true, true, prod)", n, n);
-    jl_value_t *A_operator = checked_eval_string(linop_str);
+    jl_value_t *A_operator = handle_eval_string(linop_str);
 
-    checked_eval_string("using Krylov");
-    jl_function_t *cg = checked_eval_string("(A, b) -> cg(A, b)[1]");
-    check_julia_exception();
+    handle_eval_string("using Krylov");
+    jl_function_t *cg = handle_eval_string("(A, b) -> cg(A, b)[1]");
+    handle_julia_exception();
     {
         jl_array_t *u = (jl_array_t *) jl_call2(cg, A_operator, (jl_value_t *) rhs);
         JL_GC_PUSH1(&u);
-        check_julia_exception();
+        handle_julia_exception();
 
         cout << "Plotting... this may take a while" << endl;
-        checked_eval_string("using Plots");
+        handle_eval_string("using Plots");
         jl_function_t *plot = jl_get_function(jl_main_module, "plot");
         jl_call1(plot, (jl_value_t *) u);
-        checked_eval_string("png(\"linear-algebra4\")");
+        handle_eval_string("png(\"linear-algebra4\")");
         JL_GC_POP();
     }
 
     JL_GC_POP();
 
-    check_julia_exception();
+    handle_julia_exception();
 
     jl_atexit_hook(0);
 
