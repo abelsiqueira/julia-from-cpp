@@ -9,21 +9,10 @@ function my_sqrt(x)
     return y
 end
 
-function faketrapezoid(y, a, b, n)
-    f(x) = exp(x)
-    I = zero(a)
-    for x in range(a, b, length=n)
-        α = x == a || x == b ? 1 : 2
-        I += α * f(x)
-    end
-    return I * (b - a) / 2 / (n - 1) + y
-end
-
 function trapezoid(f, a, b, n)
-    I = zero(a)
-    for x in range(a, b, length=n)
-        α = x == a || x == b ? 1 : 2
-        I += α * f(x)
+    I = f(a) + f(b)
+    for x in range(a, b, length=n+1)[2:end-1]
+        I += 2 * f(x)
     end
-    return I * (b - a) / 2 / (n - 1)
+    return I * (b - a) / 2n
 end

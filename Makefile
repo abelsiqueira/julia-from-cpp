@@ -4,6 +4,9 @@ JLARGS = -I$(JULIA_DIR)/include/julia -L$(JULIA_DIR)/lib -Wl,-rpath,$(JULIA_DIR)
 SRC = $(filter-out aux.cpp, $(wildcard *.cpp))
 EXE = $(SRC:cpp=exe)
 LIBS = libmy_c_func.so libpoisson_mul.so
+OBJS = aux.o Normal.o
+
+.PRECIOUS: $(LIBS)
 
 .PHONY: all clean purge default
 default:
@@ -11,8 +14,8 @@ default:
 
 all: $(EXE)
 
-%.exe: %.cpp $(LIBS) aux.o
-	g++ $(CARGS) $< $(JLARGS) aux.o -o $@
+%.exe: %.cpp $(LIBS) $(OBJS)
+	g++ $(CARGS) $< $(JLARGS) $(OBJS) -o $@
 
 %.o: %.cpp
 	g++ $(CARGS) -c $< $(JLARGS) -o $@
@@ -21,7 +24,7 @@ lib%.so: %.o
 	ld -shared $< -o $@
 
 clean:
-	rm -f $(EXE)
+	rm -f $(EXE) *.o *.so
 
 purge: clean
 	rm -f *.png
