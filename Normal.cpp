@@ -1,21 +1,22 @@
 #include "Normal.h"
 
 bool Normal::distributions_loaded = false;
+jl_function_t *Normal::_Normal = 0;
+jl_function_t *Normal::_pdf = 0;
+jl_function_t *Normal::_cdf = 0;
 
-Normal::Normal() {
+Normal::Normal(double mean, double standard_deviation) {
     Normal::initialize();
-    this->normal = handle_eval_string("Normal()");
+    this->normal = jl_call2(_Normal, jl_box_float64(mean), jl_box_float64(standard_deviation));
 }
 
 Normal::~Normal() {}
 
 double Normal::pdf(double x) {
-    jl_function_t *pdf = jl_get_function(jl_main_module, "pdf");
-    return jl_unbox_float64(jl_call2(pdf, this->normal, jl_box_float64(x)));
+    return jl_unbox_float64(jl_call2(_pdf, this->normal, jl_box_float64(x)));
 }
 
 double Normal::cdf(double x) {
-    jl_function_t *cdf = jl_get_function(jl_main_module, "cdf");
-    return jl_unbox_float64(jl_call2(cdf, this->normal, jl_box_float64(x)));
+    return jl_unbox_float64(jl_call2(_cdf, this->normal, jl_box_float64(x)));
 }
 
