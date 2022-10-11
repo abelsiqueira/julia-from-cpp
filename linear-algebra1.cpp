@@ -11,7 +11,8 @@ int main() {
 
     jl_init();
 
-    jl_value_t *array_type = jl_apply_array_type((jl_value_t *) jl_float64_type, 1);
+    jl_value_t *array_type = jl_apply_array_type((jl_value_t *)
+    jl_float64_type, 1);
     jl_value_t *matrix_type = jl_apply_array_type((jl_value_t *) jl_float64_type, 2);
     jl_array_t *x = jl_alloc_array_1d(array_type, n);
     jl_array_t *A = jl_alloc_array_2d(matrix_type, n, n);
@@ -27,21 +28,29 @@ int main() {
     }
 
     for (size_t i = 0; i < n; i++) {
-        AData[i * n + i] = 2.0;
-        if (i < n - 1)
-            AData[(i + 1) * n + i] = 1.0;
-        if (i > 0)
-            AData[(i - 1) * n + i] = 1.0;
+        for (size_t j = 0; j < i; j++)
+            AData[i + j * n] = 1.0;
+        AData[i + i * n] = n;
+        for (size_t j = i + 1; j < n; j++)
+            AData[i + j * n] = -1.0;
     }
 
     handle_eval_string("using LinearAlgebra");
-    jl_function_t *dot = jl_get_function(jl_main_module, "dot");
-    cout << jl_unbox_float64(jl_call2(dot, (jl_value_t *) x, (jl_value_t *) x)) << endl;
-
     jl_function_t *prod = jl_get_function(jl_base_module, "*");
     jl_array_t *Ax = (jl_array_t *) jl_call2(prod, (jl_value_t *) A, (jl_value_t *) x);
 
     double *AxData = (double *) jl_array_data(Ax);
+    cout << "Ax =";
+    for (size_t i = 0; i < n; i++) {
+        cout << " " << AxData[i];
+    }
+    cout << endl;
+
+    for (size_t i = 0; i < n; i++) {
+        xData[i] = i + 1;
+    }
+    prod = jl_get_function(jl_main_module, "mul!");
+    jl_call3(prod, (jl_value_t *) Ax, (jl_value_t *) A, (jl_value_t *) x);
     cout << "Ax =";
     for (size_t i = 0; i < n; i++) {
         cout << " " << AxData[i];
